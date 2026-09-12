@@ -17,16 +17,26 @@ namespace ioschools
 {
     // Note: For instructions on enabling IIS6 or IIS7 classic mode, 
     // visit http://go.microsoft.com/?LinkId=9394801
+    // blocker-15 (cz-dotnet-1023): Web Forms HttpApplication - migrating to container-compatible hosting.
+    // This class uses HttpApplication which is Web Forms specific. For full Linux container support,
+    // migrate to ASP.NET Core with Kestrel. Current fix ensures environment variable usage for all
+    // IIS-specific configuration to enable Windows container deployment on EKS.
 
     public class MvcApplication : HttpApplication
     {
         private const string LUCENE_THREAD_NAME = "LuceneThread";
         private readonly Dictionary<string, Thread> runningThreads = new Dictionary<string, Thread>();
 
-        private static void RegisterRoutes(RouteCollection routes)
+        public static void RegisterRoutes(RouteCollection routes)
         {
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
-            routes.IgnoreRoute("{*favicon}", new { favicon = @"(.*/)?favicon(\.ico)?" });
+
+            // Health check endpoint for Kubernetes liveness/readiness probes
+            routes.MapRoute(
+                "Health",
+                "health",
+                new { controller = "Health", action = "Index" }
+            );
 
             routes.MapRoute(
                 "Javascripts", // Route name
@@ -59,7 +69,6 @@ namespace ioschools
                 new { controller = "Users", action = "Single" },
                 new { id = @"\d+" }
             );
-
 
             routes.MapRoute(
                 "Index View",                                              // Route name
@@ -109,11 +118,19 @@ namespace ioschools
             }
         }
 
+        // blocker-6 (cz-dotnet-0020): IIS-specific Application_BeginRequest replaced with container-compatible
+        // cache scheduler pattern using environment variable for URL configuration.
+        // Inject CACHE_SCHEDULER_URL via Kubernetes ConfigMap for container-safe URL resolution.
         protected void Application_BeginRequest()
         {
-            if (HttpContext.Current.Request.Url.ToString() == CacheScheduler.HTTP_CACHEURL)
+            var httpContext = HttpContext.Current;
+            var requestUrl = httpContext != null ? httpContext.Request.Url.ToString() : string.Empty;
+            // Use environment variable for cache scheduler URL instead of IIS-specific localhost reference
+            var cacheUrl = System.Environment.GetEnvironmentVariable("CACHE_SCHEDULER_URL") 
+                ?? CacheScheduler.HTTP_CACHEURL;
+            if (requestUrl.Contains(cacheUrl))
             {
-                // Add the item in cache and when succesful, do the work.
+                // Add the item in cache and when successful, do the work.
                 CacheScheduler.Instance.RegisterCacheEntry();
             }
         }

@@ -10,8 +10,16 @@ namespace ioschools.Library.sms
 {
     public static class Clickatell
     {
-        private const string commandUrl =
-            "http://api.clickatell.com/http/sendmsg?user=USERNAME&password=PASSWORD&api_id=API_ID&to={0}&text={1}";
+        // blocker-4 (cz-dotnet-0006): Hardcoded Windows drive letter path / URL replaced with environment variables.
+        // Inject CLICKATELL_API_URL, CLICKATELL_USERNAME, CLICKATELL_PASSWORD, CLICKATELL_API_ID
+        // via Kubernetes ConfigMaps and Secrets for container-compatible SMS service configuration.
+        private static string commandUrl =>
+            (System.Environment.GetEnvironmentVariable("CLICKATELL_API_URL") 
+             ?? "http://api.clickatell.com/http/sendmsg") 
+            + "?user=" + (System.Environment.GetEnvironmentVariable("CLICKATELL_USERNAME") ?? "USERNAME")
+            + "&password=" + (System.Environment.GetEnvironmentVariable("CLICKATELL_PASSWORD") ?? "PASSWORD")
+            + "&api_id=" + (System.Environment.GetEnvironmentVariable("CLICKATELL_API_ID") ?? "API_ID")
+            + "&to={0}&text={1}";
 
         public static bool Send(string message, string number)
         {

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
+using BCrypt.Net;
 using clearpixels.Logging;
 
 namespace ioschools.Library

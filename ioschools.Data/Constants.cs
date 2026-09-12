@@ -41,10 +41,10 @@
         // attendance
         public const int ATTENDANCE_TRIGGER_LEVEL = 3;
 
-#if DEBUG
-        public const string HTTP_HOST = "http://localhost:33224";
-#else
-        public const string HTTP_HOST = "http://ioschools.edu.my";
-#endif
+        // blocker-1 (cz-dotnet-0006): Hardcoded drive letter / Windows-style path replaced with environment variable.
+        // blocker-38 (cz-dotnet-1043): Hardcoded localhost URL replaced with environment variable for Kubernetes service DNS.
+        // Inject APP_HTTP_HOST via Kubernetes ConfigMap: e.g. http://ioschools-service.default.svc.cluster.local
+        public static string HTTP_HOST => 
+            System.Environment.GetEnvironmentVariable("APP_HTTP_HOST") ?? "http://ioschools.edu.my";
     }
 }

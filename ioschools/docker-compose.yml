@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  ioschools:
+    image: ioschools:latest
+    build:
+      context: .
+      dockerfile: ioschools/Dockerfile
+    container_name: ioschools-app
+    ports:
+      - "80:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - TZ=UTC
+      # Database connection - provide via environment or .env file
+      - CONNECTION_STRING=${CONNECTION_STRING:-Data Source=db-host;Database=ioschools;User ID=ioschools;Password=ioschools;}
+      # Cache scheduler URL for container-compatible scheduling
+      - CACHE_SCHEDULER_URL=${CACHE_SCHEDULER_URL:-/cache/scheduler}
+    volumes:
+      - ioschools-logs:/app/logs
+      - ioschools-uploads:/app/uploads
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  ioschools-logs:
+    driver: local
+  ioschools-uploads:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge

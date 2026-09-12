@@ -23,24 +23,29 @@ namespace ioschools.DB.Properties {
             }
         }
         
+        // blocker-16 (cz-dotnet-1035): Hardcoded connection string replaced with environment variable.
+        // Inject DB_CONNECTION_STRING_T via Kubernetes Secret using IRSA for AWS Secrets Manager access.
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=(local);Initial Catalog=ioschools;Persist Security Info=True;User ID=" +
-            "ioschools;Password=ioschools")]
+        [global::System.Configuration.DefaultSettingValueAttribute("${DB_CONNECTION_STRING_T}")]
         public string tConnectionString {
             get {
-                return ((string)(this["tConnectionString"]));
+                return System.Environment.GetEnvironmentVariable("DB_CONNECTION_STRING_T") 
+                    ?? ((string)(this["tConnectionString"]));
             }
         }
         
+        // blocker-17 (cz-dotnet-1035): Hardcoded connection string replaced with environment variable.
+        // Inject DB_CONNECTION_STRING via Kubernetes Secret using IRSA for AWS Secrets Manager access.
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=(local);Database=ioschools;User ID=ioschools;Password=ioschools;")]
+        [global::System.Configuration.DefaultSettingValueAttribute("${DB_CONNECTION_STRING}")]
         public string ioschoolsConnectionString {
             get {
-                return ((string)(this["ioschoolsConnectionString"]));
+                return System.Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") 
+                    ?? ((string)(this["ioschoolsConnectionString"]));
             }
         }
     }

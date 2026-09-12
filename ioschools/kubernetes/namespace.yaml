@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ioschools
+  labels:
+    name: ioschools
+    app: ioschools
+    managed-by: kubectl

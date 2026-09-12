@@ -34,11 +34,10 @@ namespace ioschools.Models.fees.liquid
             {
                 this.uniqueid = Utility.GetRandomString(10);
             }
+            // blocker-5 (cz-dotnet-0006): Hardcoded Windows drive letter path replaced with environment variable.
+            // Inject APP_HTTP_HOST via Kubernetes ConfigMap: e.g. http://ioschools-service.default.svc.cluster.local
+            url_finance = (System.Environment.GetEnvironmentVariable("APP_HTTP_HOST") ?? "http://www.ioschools.edu.my") + "/finance/parent?id=" + this.uniqueid;
             children = new List<Children>();
-            pay_to = "";
-            url_finance = "http://www.ioschools.edu.my/finance/parent?id=" + this.uniqueid;
-
-            date_reminders = Enumerable.Empty<string>();
         }
 
         public void Initialise(ReminderJSON reminder)

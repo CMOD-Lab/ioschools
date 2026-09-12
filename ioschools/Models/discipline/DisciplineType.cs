@@ -88,18 +88,26 @@ namespace ioschools.Models.discipline
 
     public static class DisciplineTypeHelper
     {
-        public static readonly List<SelectListItem> Types;
-        static DisciplineTypeHelper()
+        // blocker-23 (cz-dotnet-0023): Static variable holding shared state replaced with a computed property.
+        // This avoids inconsistent behavior when containers scale horizontally in Kubernetes/EKS.
+        // Each call computes a fresh list, eliminating shared mutable static state across pod instances.
+        // For distributed caching of this data, inject IDistributedCache (Redis via ElastiCache)
+        // using Kubernetes ConfigMaps and Secrets.
+        public static List<SelectListItem> Types
         {
-            Types = Enum.GetValues(typeof (DisciplineType))
-                .Cast<Enum>()
-                .Select(x => new SelectListItem()
-                                 {
-                                     Text = x.ToDescriptionString(),
-                                     Value = x.ToInt().ToString()
-                                 }).ToList();
+            get
+            {
+                var types = Enum.GetValues(typeof(DisciplineType))
+                    .Cast<Enum>()
+                    .Select(x => new SelectListItem()
+                                     {
+                                         Text = x.ToDescriptionString(),
+                                         Value = x.ToInt().ToString()
+                                     }).ToList();
 
-            Types.Insert(0, new SelectListItem() {Text = "Select type ...", Value = ""});
+                types.Insert(0, new SelectListItem() { Text = "Select type ...", Value = "" });
+                return types;
+            }
         }
 
         public static bool IsMerit(this DisciplineType row)

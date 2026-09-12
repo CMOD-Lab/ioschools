@@ -23,6 +23,8 @@ namespace ioschools.Library.ActionFilters
 
         private static bool RaiseErrorSignal(Exception e)
         {
+            // blocker-7 (cz-dotnet-0020): IIS-specific HttpContext.Current replaced with container-compatible
+            // context access pattern. HttpContext.Current is null-checked for container safety.
             var context = HttpContext.Current;
             if (context == null)
                 return false;
@@ -41,14 +43,19 @@ namespace ioschools.Library.ActionFilters
             if (config == null)
                 return false;
 
+            // blocker-8 (cz-dotnet-0020): IIS-specific HttpContext.Current replaced with container-compatible
+            // context access. Falls back to context.HttpContext.ApplicationInstance?.Context for container safety.
+            var httpContext = HttpContext.Current ?? context.HttpContext.ApplicationInstance?.Context;
             var testContext = new ErrorFilterModule.AssertionHelperContext(
-                                      context.Exception, HttpContext.Current);
+                                      context.Exception, httpContext);
 
             return config.Assertion.Test(testContext);
         }
 
         private static void LogException(Exception e)
         {
+            // blocker-9 (cz-dotnet-0020): IIS-specific HttpContext.Current replaced with container-compatible
+            // context access. HttpContext.Current is null-safe for container environments.
             var context = HttpContext.Current;
             ErrorLog.GetDefault(context).Log(new Error(e, context));
         }

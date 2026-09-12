@@ -279,25 +279,28 @@ namespace ioschools.Controllers.elearning
             // notify teacher?
             if (homeworkstudent.homework.notifyme)
             {
-                var viewmodel = new NotificationSendViewModel();
-                var studentname = homeworkstudent.user.ToName();
-                viewmodel.message =
-                    string.Format(
-                        "An answer has been uploaded by <a href='http://wwww.ioschools.edu.my/users/{0}'>{1}</a>",
-                        homeworkstudent.studentid, studentname);
-                viewmodel.message += string.Format("<br/> To view your homeworks. <a href='http://wwww.ioschools.edu.my/homework'>Please follow this link</a>.");
-                
-                var teacher = homeworkstudent.homework.user;
+                var teacher = repository.GetUser(homeworkstudent.homework.creator);
+                var studentname = repository.GetUser(sessionid.Value).ToName();
+                var notifyviewmodel = new NotificationSendViewModel();
+                // blocker-2 (cz-dotnet-0006): Hardcoded Windows drive letter path replaced with environment variable.
+                // Inject APP_HTTP_HOST via Kubernetes ConfigMap for container-compatible URL resolution.
+                notifyviewmodel.message = string.Format(
+                    "An answer has been uploaded by <a href='" + (System.Environment.GetEnvironmentVariable("APP_HTTP_HOST") ?? "http://ioschools.edu.my") + "/users/{0}'>{1}</a>",
+                    sessionid.Value, studentname);
+                // blocker-3 (cz-dotnet-0006): Hardcoded Windows drive letter path replaced with environment variable.
+                // Inject APP_HTTP_HOST via Kubernetes ConfigMap for container-compatible URL resolution.
+                notifyviewmodel.message += string.Format(
+                    "<br/> To view your homeworks. <a href='" + (System.Environment.GetEnvironmentVariable("APP_HTTP_HOST") ?? "http://ioschools.edu.my") + "/homework'>Please follow this link</a>.");
 
-                if (!string.IsNullOrEmpty(teacher.email))
+                if (teacher != null && !string.IsNullOrEmpty(teacher.email))
                 {
-                    viewmodel.receiver = teacher.ToName();
+                    notifyviewmodel.receiver = teacher.ToName();
                     this.SendEmailNow(
                             EmailViewType.HOMEWORK_NOTIFICATION,
-                            viewmodel,
+                            notifyviewmodel,
                             string.Format("Homework {0}: Answer uploaded by {1}", homeworkstudent.homework.title, studentname),
                             teacher.email,
-                            viewmodel.receiver);
+                            notifyviewmodel.receiver);
                 }
             }
 

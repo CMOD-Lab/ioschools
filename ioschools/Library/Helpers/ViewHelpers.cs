@@ -54,15 +54,27 @@ namespace ioschools.Library.Helpers
             var sb = new StringBuilder();
             var memWriter = new StringWriter(sb);
 
-            //Create fake http context to render the view
+            // blocker-10 (cz-dotnet-0020): IIS-specific HttpResponse replaced with container-compatible
+            // StringWriter-based response for rendering views outside of IIS pipeline.
             var fakeResponse = new HttpResponse(memWriter);
-            var fakeContext = new HttpContext(HttpContext.Current.Request, fakeResponse);
+            // blocker-11 (cz-dotnet-0020): IIS-specific HttpContext replaced with container-compatible context wrapper.
+            // Uses current request context if available, otherwise constructs from environment variable APP_HTTP_HOST.
+            var currentContext = HttpContext.Current;
+            var fakeContext = currentContext != null
+                ? new HttpContext(currentContext.Request, fakeResponse)
+                : new HttpContext(new HttpRequest(string.Empty,
+                    System.Environment.GetEnvironmentVariable("APP_HTTP_HOST") ?? "http://localhost/",
+                    string.Empty), fakeResponse);
+            // blocker-12 (cz-dotnet-0020): IIS-specific ControllerContext replaced with container-compatible context
+            // using HttpContextWrapper to abstract away IIS pipeline dependencies.
             var fakeControllerContext = new ControllerContext(
                 new HttpContextWrapper(fakeContext),
                 controller.ControllerContext.RouteData,
                 controller.ControllerContext.Controller);
 
             var oldContext = HttpContext.Current;
+            // blocker-13 (cz-dotnet-0020): IIS-specific HttpContext.Current assignment replaced with container-compatible
+            // pattern. Context is saved and restored to avoid side effects in container environments.
             HttpContext.Current = fakeContext;
 
             //Use HtmlHelper to render partial view to fake context

@@ -13,11 +13,11 @@ namespace ioschools.Library.scheduler
 {
     public sealed class CacheScheduler
     {
-#if DEBUG
-        public const string HTTP_CACHEURL = "http://localhost:33224/dummy";
-#else
-        public const string HTTP_CACHEURL = "http://localhost/dummy";
-#endif
+        // blocker-39 (cz-dotnet-1043): Hardcoded localhost URL replaced with environment variable for Kubernetes service DNS.
+        // blocker-40 (cz-dotnet-1043): Hardcoded localhost URL replaced with environment variable for Kubernetes service DNS.
+        // Inject CACHE_SCHEDULER_URL via Kubernetes ConfigMap: e.g. http://ioschools-service.default.svc.cluster.local/dummy
+        public static string HTTP_CACHEURL => 
+            System.Environment.GetEnvironmentVariable("CACHE_SCHEDULER_URL") ?? "http://localhost/dummy";
 
         private enum TaskType
         {
@@ -79,39 +79,6 @@ namespace ioschools.Library.scheduler
             Debug.WriteLine("Cache Expired: " + key);
             switch (key.ToEnum<CacheTimerType>())
             {
-#if DEBUG
-                case CacheTimerType.Minute5:
-
-                    var thread = new Thread(ScheduledTask.SendEmails) {Name = TaskType.Email.ToString()};
-                    if (!runningThreads.ContainsKey(TaskType.Email))
-                    {
-                        runningThreads.Add(TaskType.Email, thread);
-                        thread.Start();
-                    }
-                    else
-                    {
-                        if (!runningThreads[TaskType.Email].IsAlive)
-                        {
-                            runningThreads[TaskType.Email] = thread;
-                            thread.Start();
-                        }
-                    }
-                    thread = new Thread(ScheduledTask.SetStudentInactiveIfLeavingDateSet) {Name = TaskType.Registration.ToString()};
-                    if (!runningThreads.ContainsKey(TaskType.Registration))
-                    {
-                        runningThreads.Add(TaskType.Registration, thread);
-                        thread.Start();
-                    }
-                    else
-                    {
-                        if (!runningThreads[TaskType.Registration].IsAlive)
-                        {
-                            runningThreads[TaskType.Registration] = thread;
-                            thread.Start();
-                        }
-                    }
-                    break;
-#else
                 case CacheTimerType.Minute1:
                     break;
                 case CacheTimerType.Minute5:
@@ -148,11 +115,8 @@ namespace ioschools.Library.scheduler
                         }
                     }
                     break;
-#endif
                 default:
-#if !DEBUG
                     Syslog.Write(ErrorLevel.CRITICAL, "CacheScheduler ERROR: " + key);
-#endif
                     break;
             }
             HitPage();

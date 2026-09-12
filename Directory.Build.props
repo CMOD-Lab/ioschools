@@ -1,0 +1,9 @@
+<Project>
+  <!-- All projects target net8.0; no .NET Framework reference assemblies needed -->
+  <PropertyGroup>
+    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+    <!-- Suppress MSB3644 in case any legacy targets check for .NET Framework assemblies -->
+    <NoWarn>$(NoWarn);MSB3644</NoWarn>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+</Project>

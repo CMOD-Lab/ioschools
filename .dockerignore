@@ -1,0 +1,47 @@
+# .dockerignore - blocker-33, 34, 35, 36, 37: Exclude unnecessary files to reduce container image size
+
+# Source control
+.git
+.gitignore
+.gitattributes
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build outputs (source)
+**/bin/Debug/
+**/obj/
+
+# PDB debug files
+**/*.pdb
+
+# Test projects
+**/*.Tests/
+**/*.Test/
+
+# Documentation
+*.md
+LICENSE
+
+# Temporary files
+**/*.tmp
+**/*.temp
+**/Thumbs.db
+
+# NuGet
+**/packages/
+**/*.nupkg
+
+# SQL scripts (not needed in container)
+*.sql
+
+# Log files
+**/*.log
+
+# TypeScript source (compiled JS is included)
+**/*.ts
+!**/*.d.ts

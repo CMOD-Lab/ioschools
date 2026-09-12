@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ioschools
+  namespace: ioschools
+  labels:
+    app: ioschools
+    version: "1.0"
+    managed-by: kubectl
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ioschools
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ioschools
+        version: "1.0"
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: ioschools
+          image: {{IMAGE_URI}}
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:80"
+            - name: DOTNET_RUNNING_IN_CONTAINER
+              value: "true"
+            - name: TZ
+              value: "UTC"
+            # Database connection string - replace with actual value or use Secret
+            - name: CONNECTION_STRING
+              value: "{{CONNECTION_STRING}}"
+            # Cache scheduler URL for container-compatible scheduling
+            - name: CACHE_SCHEDULER_URL
+              value: "{{CACHE_SCHEDULER_URL}}"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          volumeMounts:
+            - name: logs-volume
+              mountPath: /app/logs
+            - name: uploads-volume
+              mountPath: /app/uploads
+      volumes:
+        - name: logs-volume
+          emptyDir: {}
+        - name: uploads-volume
+          emptyDir: {}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000

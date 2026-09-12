@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using BCryptNet = BCrypt.Net.BCrypt;
 using ioschools.Data;
 using ioschools.Data.Attendance;
 using ioschools.Data.User;
@@ -14,7 +15,7 @@ namespace ioschools.DB.repository
         public user GetActiveUserLogin(string email, string password)
         {
             var usr = db.users.SingleOrDefault(x => x.email == email && (x.settings & (int)UserSettings.INACTIVE) == 0);
-            if (usr != null && !string.IsNullOrEmpty(usr.passwordhash) && BCrypt.CheckPassword(email + password, usr.passwordhash))
+            if (usr != null && !string.IsNullOrEmpty(usr.passwordhash) && BCryptNet.Verify(email + password, usr.passwordhash))
             {
                 return usr;
             }
